@@ -9,16 +9,16 @@
   "license": "MIT",
   "require": {
     "php": "^8.2",
-    "league/fractal": "^0.20.1",
-    "ramsey/uuid": "^4.7",
-    "php-di/php-di": "^7.0",
-    "slim/slim": "^4.12",
-    "slim/psr7": "^1.6",
-    "vlucas/phpdotenv": "^5.5",
-    "symfony/messenger": "^6.3",
     "doctrine/dbal": "^3.7",
     "doctrine/migrations": "^3.7",
-    "symfony/console": "^6.3"
+    "league/fractal": "^0.20.2",
+    "php-di/php-di": "^7.0",
+    "ramsey/uuid": "^4.7",
+    "slim/psr7": "^1.6",
+    "slim/slim": "^4.12",
+    "symfony/console": "^6.3",
+    "symfony/messenger": "^6.3",
+    "vlucas/phpdotenv": "^5.5"
   },
   "require-dev": {
     "phpunit/phpunit": "^10.1",

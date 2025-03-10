@@ -4,11 +4,16 @@ namespace Src\Application\User\Query;
 
 final class SearchUserQuery
 {
-  public function __construct(
-    private int $page = 1,
-    private int $perPage = 15,
-    private string $search = ''
-  ) {}
+  private int $page;
+  private int $perPage;
+  private string $search;
+
+  public function __construct($params)
+  {
+    $this->page = $params['page'] ?? 1;
+    $this->perPage = $params['perPage'] ?? 15;
+    $this->search = $params['search'] ?? '';
+  }
 
   public function page(): int
   {

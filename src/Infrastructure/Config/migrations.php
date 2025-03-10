@@ -14,7 +14,7 @@ return [
     'all_or_nothing' => true,
     'transactional' => true,
     'check_database_platform' => true,
-    'organize_migrations' => 'year_and_month',
+    'organize_migrations' => 'none',
     'connection' => null,
     'em' => null,
-]; 
+];

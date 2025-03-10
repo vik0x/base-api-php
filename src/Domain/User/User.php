@@ -16,8 +16,7 @@ final class User
         private Password $password,
         private \DateTimeImmutable $createdAt,
         private ?\DateTimeImmutable $updatedAt = null
-    ) {
-    }
+    ) {}
 
     public static function create(
         string $name,
@@ -59,7 +58,7 @@ final class User
             throw new \DomainException('User already has an ID');
         }
         $this->id = $id;
-        
+
         $this->record(new UserCreated($this->id->value()));
     }
 
@@ -108,4 +107,4 @@ final class User
     {
         // Trigger event using EventDispatcher
     }
-} 
+}

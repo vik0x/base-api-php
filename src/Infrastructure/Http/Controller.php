@@ -5,20 +5,15 @@ namespace Src\Infrastructure\Http;
 use DI\Container;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Src\Infrastructure\Http\Services\FractalService;
+use Src\Infrastructure\Bus\CommandBus;
 
 abstract class Controller
 {
-    public function __construct(protected Container $container) {}
-
-    protected function dispatch($command)
+    public function __construct(protected Container $container, protected FractalService $fractal, protected CommandBus $commandBus)
     {
-        $commandClass = get_class($command);
-        $handlerClass = str_replace('Command', 'Handler', $commandClass);
-        if ($commandClass === $handlerClass) {
-            $handlerClass = str_replace('Query', 'Handler', $commandClass);
-        }
-
-        return $this->container->get($handlerClass)($command);
+        $this->fractal = $fractal;
+        $this->commandBus = $commandBus;
     }
 
     protected function jsonResponse(Response $response, mixed $data, int $status = 200): Response

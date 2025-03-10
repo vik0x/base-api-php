@@ -4,11 +4,15 @@ namespace Src\Application\User\Command;
 
 final class CreateUserCommand
 {
-    public function __construct(
-        private string $name,
-        private string $email,
-        private string $password
-    ) {
+    private string $name;
+    private string $email;
+    private string $password;
+
+    public function __construct(private array $data)
+    {
+        $this->name = $data['name'];
+        $this->email = $data['email'];
+        $this->password = $data['password'];
     }
 
     public function name(): string
@@ -25,4 +29,4 @@ final class CreateUserCommand
     {
         return $this->password;
     }
-} 
+}
