@@ -10,8 +10,8 @@ final class CreateUserCommand
 
     public function __construct(private array $data)
     {
-        $this->name = $data['name'];
-        $this->email = $data['email'];
+        $this->name     = $data['name'];
+        $this->email    = $data['email'];
         $this->password = $data['password'];
     }
 

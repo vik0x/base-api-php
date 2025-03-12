@@ -12,4 +12,4 @@ final class DeleteUserCommand
     {
         return $this->id;
     }
-} 
+}

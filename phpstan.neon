@@ -1,0 +1,26 @@
+parameters:
+    level: 8
+    paths:
+        - src
+        - tests
+    excludePaths:
+        - src/Infrastructure/Persistence/Migrations/*
+    checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false
+    ignoreErrors:
+        # Ignorar errores específicos si es necesario
+        # - '#PHPDoc tag @var#'
+    reportUnmatchedIgnoredErrors: true
+    treatPhpDocTypesAsCertain: false
+    
+    # Reglas específicas para DDD
+    checkFunctionNameCase: true
+    checkInternalClassCaseSensitivity: true
+    
+    # Reglas para mejorar la calidad del código
+    polluteScopeWithLoopInitialAssignments: false
+    polluteScopeWithAlwaysIterableForeach: false
+    
+    # Reglas para detectar código muerto
+    reportMaybesInMethodSignatures: true
+    reportStaticMethodSignatures: true 

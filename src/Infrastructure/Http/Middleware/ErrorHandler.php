@@ -20,8 +20,8 @@ final class ErrorHandler implements MiddlewareInterface
         } catch (DomainException $e) {
             $response = new Response();
             $response->getBody()->write(json_encode([
-                'error' => $e->getMessage()
-            ]));
+                                                     'error' => $e->getMessage(),
+                                                    ]));
 
             return $response
                 ->withHeader('Content-Type', 'application/json')
@@ -29,14 +29,14 @@ final class ErrorHandler implements MiddlewareInterface
         } catch (\Throwable $e) {
             $response = new Response();
             $response->getBody()->write(json_encode([
-                'error' => 'An unexpected error occurred',
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'code' => $e->getCode(),
-                'previous' => $e->getPrevious(),
-            ]));
+                                                     'error'    => 'An unexpected error occurred',
+                                                     'message'  => $e->getMessage(),
+                                                     'trace'    => $e->getTraceAsString(),
+                                                     'file'     => $e->getFile(),
+                                                     'line'     => $e->getLine(),
+                                                     'code'     => $e->getCode(),
+                                                     'previous' => $e->getPrevious(),
+                                                    ]));
 
             return $response
                 ->withHeader('Content-Type', 'application/json')

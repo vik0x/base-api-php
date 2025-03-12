@@ -32,4 +32,4 @@ final class UserId
             throw new DomainException('User id must be greater than zero');
         }
     }
-} 
+}

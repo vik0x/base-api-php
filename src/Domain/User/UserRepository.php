@@ -11,4 +11,4 @@ interface UserRepository
     public function save(User $user): void;
     public function delete(UserId $id): void;
     public function search(array $criteria, int $page = 1, int $perPage = 15): array;
-} 
+}

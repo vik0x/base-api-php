@@ -9,13 +9,15 @@ use Src\Domain\Shared\Exceptions\NotFoundException;
 
 final class DeleteUserHandler
 {
-    public function __construct(private UserRepository $repository) {}
+    public function __construct(private UserRepository $repository)
+    {
+    }
 
     public function __invoke(DeleteUserCommand $command): void
     {
         $userId = new UserId($command->id());
 
-        if (!$this->repository->find($userId)) {
+        if (! $this->repository->find($userId)) {
             throw new NotFoundException('User not found');
         }
 

@@ -1,0 +1,15 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Exclude files from exporting
+.gitattributes export-ignore
+.gitignore export-ignore
+.lintstagedrc.json export-ignore
+phpcs.xml export-ignore
+phpstan.neon export-ignore
+.php-cs-fixer.dist.php export-ignore
+install-hooks.sh export-ignore
+
+# Mark shell scripts as executable
+*.sh text eol=lf
+install-hooks.sh text eol=lf 

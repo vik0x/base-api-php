@@ -12,7 +12,7 @@ abstract class Controller
 {
     public function __construct(protected Container $container, protected FractalService $fractal, protected CommandBus $commandBus)
     {
-        $this->fractal = $fractal;
+        $this->fractal    = $fractal;
         $this->commandBus = $commandBus;
     }
 

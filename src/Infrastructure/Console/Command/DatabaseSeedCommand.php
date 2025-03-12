@@ -12,28 +12,28 @@ use Src\Infrastructure\Persistence\Seeders\UserSeeder;
 
 final class DatabaseSeedCommand extends Command
 {
-  protected static $defaultName = 'db:seed';
+    protected static $defaultName = 'db:seed';
 
-  protected function configure(): void
-  {
-    $this->setDescription('Seed the database with records');
-  }
-
-  protected function execute(
-    InputInterface $input,
-    OutputInterface $output
-  ): int {
-    try {
-      $seeder = new UserSeeder(
-        DoctrineCommandsFactory::createConnection()
-      );
-      $seeder->run();
-
-      $output->writeln('<info>Database seeded successfully!</info>');
-      return self::SUCCESS;
-    } catch (\Exception $e) {
-      $output->writeln("<error>{$e->getMessage()}</error>");
-      return self::FAILURE;
+    protected function configure(): void
+    {
+        $this->setDescription('Seed the database with records');
     }
-  }
+
+    protected function execute(
+        InputInterface $input,
+        OutputInterface $output
+    ): int {
+        try {
+            $seeder = new UserSeeder(
+                DoctrineCommandsFactory::createConnection()
+            );
+            $seeder->run();
+
+            $output->writeln('<info>Database seeded successfully!</info>');
+            return self::SUCCESS;
+        } catch (\Exception $e) {
+            $output->writeln('<error>' . $e->getMessage() . '</error>');
+            return self::FAILURE;
+        }
+    }
 }

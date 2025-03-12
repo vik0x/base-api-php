@@ -16,7 +16,8 @@ final class User
         private Password $password,
         private \DateTimeImmutable $createdAt,
         private ?\DateTimeImmutable $updatedAt = null
-    ) {}
+    ) {
+    }
 
     public static function create(
         string $name,
@@ -66,8 +67,8 @@ final class User
         string $name,
         Email $email
     ): void {
-        $this->name = $name;
-        $this->email = $email;
+        $this->name      = $name;
+        $this->email     = $email;
         $this->updatedAt = new \DateTimeImmutable();
 
         $this->record(new UserUpdated($this->id->value()));

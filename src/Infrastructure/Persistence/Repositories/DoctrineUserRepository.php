@@ -17,10 +17,12 @@ final class DoctrineUserRepository implements UserRepository
 
     public function find(UserId $id): ?User
     {
-        $stmt = $this->connection->prepare('SELECT * FROM users WHERE id = ?');
+        $stmt   = $this->connection->prepare('SELECT * FROM users WHERE id = ?');
         $result = $stmt->executeQuery([$id->value()]);
-        
-        if ($row = $result->fetchAssociative()) {
+        $row    = $result->fetchAssociative();
+
+
+        if ($row) {
             return $this->hydrateUser($row);
         }
 
@@ -29,10 +31,11 @@ final class DoctrineUserRepository implements UserRepository
 
     public function findByEmail(Email $email): ?User
     {
-        $stmt = $this->connection->prepare('SELECT * FROM users WHERE email = ?');
+        $stmt   = $this->connection->prepare('SELECT * FROM users WHERE email = ?');
         $result = $stmt->executeQuery([$email->value()]);
-        
-        if ($row = $result->fetchAssociative()) {
+        $row    = $result->fetchAssociative();
+
+        if ($row) {
             return $this->hydrateUser($row);
         }
 
@@ -60,12 +63,12 @@ final class DoctrineUserRepository implements UserRepository
            ->from('users');
 
         foreach ($criteria as $field => $value) {
-            $qb->andWhere("$field LIKE :$field")
-               ->setParameter($field, "%$value%");
+            $qb->andWhere($field . ' LIKE :' . $field)
+               ->setParameter($field, '%' . $value . '%');
         }
 
         $total = $this->connection->fetchOne(
-            "SELECT COUNT(*) FROM ({$qb->getSQL()}) as count_table",
+            'SELECT COUNT(*) FROM (' . $qb->getSQL() . ') as count_table',
             $qb->getParameters()
         );
 
@@ -74,25 +77,25 @@ final class DoctrineUserRepository implements UserRepository
            ->orderBy('created_at', 'DESC');
 
         $results = $qb->executeQuery()->fetchAllAssociative();
-        $users = array_map([$this, 'hydrateUser'], $results);
+        $users   = array_map([$this, 'hydrateUser'], $results);
 
         return [
-            'data' => $users,
-            'total' => $total,
-            'page' => $page,
-            'per_page' => $perPage
-        ];
+                'data'     => $users,
+                'total'    => $total,
+                'page'     => $page,
+                'per_page' => $perPage,
+               ];
     }
 
     private function insert(User $user): void
     {
         $this->connection->insert('users', [
-            'name' => $user->name(),
-            'email' => $user->email()->value(),
-            'password' => $user->password()->value(),
-            'created_at' => $user->createdAt()->format('Y-m-d H:i:s'),
-            'updated_at' => $user->updatedAt()?->format('Y-m-d H:i:s')
-        ]);
+                                            'name'       => $user->name(),
+                                            'email'      => $user->email()->value(),
+                                            'password'   => $user->password()->value(),
+                                            'created_at' => $user->createdAt()->format('Y-m-d H:i:s'),
+                                            'updated_at' => $user->updatedAt()?->format('Y-m-d H:i:s'),
+                                           ]);
 
         $id = (int) $this->connection->lastInsertId();
         $user->assignId(new UserId($id));
@@ -101,13 +104,13 @@ final class DoctrineUserRepository implements UserRepository
     private function update(User $user): void
     {
         $this->connection->update('users', [
-            'name' => $user->name(),
-            'email' => $user->email()->value(),
-            'password' => $user->password()->value(),
-            'updated_at' => $user->updatedAt()?->format('Y-m-d H:i:s')
-        ], [
-            'id' => $user->id()->value()
-        ]);
+                                            'name'       => $user->name(),
+                                            'email'      => $user->email()->value(),
+                                            'password'   => $user->password()->value(),
+                                            'updated_at' => $user->updatedAt()?->format('Y-m-d H:i:s'),
+                                           ], [
+                                               'id' => $user->id()->value(),
+                                              ]);
     }
 
     private function hydrateUser(array $row): User
@@ -121,4 +124,4 @@ final class DoctrineUserRepository implements UserRepository
             $row['updated_at'] ? new \DateTimeImmutable($row['updated_at']) : null
         );
     }
-} 
+}

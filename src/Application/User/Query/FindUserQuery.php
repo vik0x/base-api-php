@@ -4,7 +4,9 @@ namespace Src\Application\User\Query;
 
 final class FindUserQuery
 {
-    public function __construct(private int $id) {}
+    public function __construct(private int $id)
+    {
+    }
 
     public function id(): int
     {

@@ -14,8 +14,8 @@ abstract class DoctrineSeeder
     public function __construct(Connection $connection)
     {
         $this->connection = $connection;
-        $this->faker = Factory::create('es_ES');
+        $this->faker      = Factory::create('es_ES');
     }
 
     abstract public function run(): void;
-} 
+}

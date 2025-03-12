@@ -12,7 +12,7 @@ abstract class IntegrationTestCase extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->connection = $this->container->get(Connection::class);
         $this->connection->beginTransaction();
     }
@@ -22,4 +22,4 @@ abstract class IntegrationTestCase extends TestCase
         $this->connection->rollBack();
         parent::tearDown();
     }
-} 
+}

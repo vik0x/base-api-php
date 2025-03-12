@@ -13,8 +13,8 @@ final class DatabaseSeeder
     public function run(): void
     {
         $seeders = [
-            UserSeeder::class,
-        ];
+                    UserSeeder::class,
+                   ];
 
         foreach ($seeders as $seeder) {
             echo sprintf("Running %s...\n", $seeder);
@@ -22,4 +22,4 @@ final class DatabaseSeeder
             echo "Done!\n";
         }
     }
-} 
+}

@@ -14,7 +14,8 @@ final class CreateUserHandler
 {
     public function __construct(
         private UserRepository $repository
-    ) {}
+    ) {
+    }
 
     public function __invoke(CreateUserCommand $command): void
     {

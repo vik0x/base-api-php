@@ -21,8 +21,8 @@ abstract class TestCase extends PHPUnitTestCase
         $containerConfig($this->container);
 
         $this->app = AppFactory::createFromContainer($this->container);
-        
+
         $routes = require __DIR__ . '/../src/Infrastructure/Http/routes.php';
         $routes($this->app);
     }
-} 
+}

@@ -34,12 +34,15 @@ final class Email
             throw new InvalidEmailException('Email is too long (maximum is 255 characters)');
         }
 
-        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+        if (! filter_var($value, FILTER_VALIDATE_EMAIL)) {
             throw new InvalidEmailException('Invalid email format');
         }
 
-        $blockedDomains = ['tempmail.com', 'throwaway.com'];
-        $domain = substr(strrchr($value, "@"), 1);
+        $blockedDomains = [
+                           'tempmail.com',
+                           'throwaway.com',
+                          ];
+        $domain         = substr(strrchr($value, '@'), 1);
         if (in_array($domain, $blockedDomains, true)) {
             throw new InvalidEmailException('Email domain not allowed');
         }
@@ -54,4 +57,4 @@ final class Email
     {
         return $this->value;
     }
-} 
+}

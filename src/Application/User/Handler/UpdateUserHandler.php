@@ -11,20 +11,22 @@ use Src\Domain\Shared\Exceptions\NotFoundException;
 
 final class UpdateUserHandler
 {
-    public function __construct(private UserRepository $repository) {}
+    public function __construct(private UserRepository $repository)
+    {
+    }
 
     public function __invoke(UpdateUserCommand $command): void
     {
         $user = $this->repository->find(new UserId($command->id()));
 
-        if (!$user) {
+        if (! $user) {
             throw new NotFoundException('User not found');
         }
 
         $email = new Email($command->email());
 
         $existingUser = $this->repository->findByEmail($email);
-        if ($existingUser && !$existingUser->id()->equals($user->id())) {
+        if ($existingUser && ! $existingUser->id()->equals($user->id())) {
             throw new EmailAlreadyExistsException();
         }
 

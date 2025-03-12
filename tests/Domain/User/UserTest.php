@@ -68,4 +68,4 @@ final class UserTest extends TestCase
         $this->assertEquals('jane@example.com', $user->email()->value());
         $this->assertNotNull($user->updatedAt());
     }
-} 
+}

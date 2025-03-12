@@ -11,56 +11,56 @@ use Symfony\Component\Console\Input\InputArgument;
 
 final class GenerateMigrationCommand extends Command
 {
-  protected static $defaultName = 'migrations:make';
-  private string $migrationsPath;
+    protected static $defaultName = 'migrations:make';
+    private string $migrationsPath;
 
-  public function __construct(string $migrationsPath)
-  {
-    parent::__construct();
-    $this->migrationsPath = $migrationsPath;
-  }
-
-  protected function configure(): void
-  {
-    $this
-      ->setDescription('Generate a new migration with a custom name')
-      ->addArgument(
-        'name',
-        InputArgument::REQUIRED,
-        'The name of the migration'
-      );
-  }
-
-  protected function execute(
-    InputInterface $input,
-    OutputInterface $output
-  ): int {
-    try {
-      $name = $input->getArgument('name');
-      $version = date('YmdHis');
-      $name = preg_replace('/[^a-zA-Z0-9]/', '', $name);
-      $className = sprintf('%s_%s', ucfirst($name), $version);
-
-      $migrationContent = $this->getMigrationTemplate($className);
-
-      if (!is_dir($this->migrationsPath)) {
-        mkdir($this->migrationsPath, 0777, true);
-      }
-
-      $fileName = $this->migrationsPath . '/' . $className . '.php';
-      file_put_contents($fileName, $migrationContent);
-
-      $output->writeln("<info>Migration created successfully: {$className}</info>");
-      return self::SUCCESS;
-    } catch (\Exception $e) {
-      $output->writeln("<error>{$e->getMessage()}</error>");
-      return self::FAILURE;
+    public function __construct(string $migrationsPath)
+    {
+        parent::__construct();
+        $this->migrationsPath = $migrationsPath;
     }
-  }
 
-  private function getMigrationTemplate(string $className): string
-  {
-    return <<<PHP
+    protected function configure(): void
+    {
+        $this
+        ->setDescription('Generate a new migration with a custom name')
+        ->addArgument(
+            'name',
+            InputArgument::REQUIRED,
+            'The name of the migration'
+        );
+    }
+
+    protected function execute(
+        InputInterface $input,
+        OutputInterface $output
+    ): int {
+        try {
+            $name      = $input->getArgument('name');
+            $version   = date('YmdHis');
+            $name      = preg_replace('/[^a-zA-Z0-9_]/', '', $name);
+            $className = sprintf('%s_%s', $version, mb_strtolower($name));
+
+            $migrationContent = $this->getMigrationTemplate($className);
+
+            if (! is_dir($this->migrationsPath)) {
+                mkdir($this->migrationsPath, 0777, true);
+            }
+
+            $fileName = $this->migrationsPath . '/' . $className . '.php';
+            file_put_contents($fileName, $migrationContent);
+
+            $output->writeln('<info>Migration created successfully: ' . $className . '</info>');
+            return self::SUCCESS;
+        } catch (\Exception $e) {
+            $output->writeln('<error>' . $e->getMessage() . '</error>');
+            return self::FAILURE;
+        }
+    }
+
+    private function getMigrationTemplate(string $className): string
+    {
+        return <<<PHP
 <?php
 
 declare(strict_types=1);
@@ -90,5 +90,5 @@ final class {$className} extends AbstractMigration
     }
 }
 PHP;
-  }
+    }
 }

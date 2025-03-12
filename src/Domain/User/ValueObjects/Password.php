@@ -10,7 +10,7 @@ final class Password
 
     public function __construct(string $value, bool $isHashed = false)
     {
-        if (!$isHashed) {
+        if (! $isHashed) {
             $this->validate($value);
             $this->value = $this->hash($value);
         } else {
@@ -47,7 +47,7 @@ final class Password
             throw new InvalidPasswordException('Password is too long (maximum is 255 characters)');
         }
 
-        if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/', $value)) {
+        if (! preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/', $value)) {
             throw new InvalidPasswordException(
                 'Password must contain at least one uppercase letter, one lowercase letter and one number'
             );
@@ -57,9 +57,9 @@ final class Password
     private function hash(string $value): string
     {
         return password_hash($value, PASSWORD_ARGON2ID, [
-            'memory_cost' => 65536,
-            'time_cost' => 4,
-            'threads' => 3
-        ]);
+                                                         'memory_cost' => 65536,
+                                                         'time_cost'   => 4,
+                                                         'threads'     => 3,
+                                                        ]);
     }
-} 
+}
