@@ -4,10 +4,11 @@ namespace Src\Infrastructure\Persistence\Repositories;
 
 use Doctrine\DBAL\Connection;
 use Src\Domain\User\User;
-use Src\Domain\User\UserId;
-use Src\Domain\User\UserRepository;
+use Src\Domain\User\ValueObjects\UserId;
+use Src\Domain\User\Repositories\UserRepository;
 use Src\Domain\Shared\ValueObjects\Email;
 use Src\Domain\User\ValueObjects\Password;
+use DateTimeImmutable;
 
 final class DoctrineUserRepository implements UserRepository
 {
@@ -17,13 +18,16 @@ final class DoctrineUserRepository implements UserRepository
 
     public function find(UserId $id): ?User
     {
-        $stmt   = $this->connection->prepare('SELECT * FROM users WHERE id = ?');
-        $result = $stmt->executeQuery([$id->value()]);
-        $row    = $result->fetchAssociative();
+        $user = $this->connection->createQueryBuilder()
+            ->select('*')
+            ->from('users')
+            ->where('id = :id')
+            ->setParameter('id', $id->value())
+            ->executeQuery()
+            ->fetchAssociative();
 
-
-        if ($row) {
-            return $this->hydrateUser($row);
+        if ($user) {
+            return $this->hydrateUser($user);
         }
 
         return null;
@@ -31,12 +35,16 @@ final class DoctrineUserRepository implements UserRepository
 
     public function findByEmail(Email $email): ?User
     {
-        $stmt   = $this->connection->prepare('SELECT * FROM users WHERE email = ?');
-        $result = $stmt->executeQuery([$email->value()]);
-        $row    = $result->fetchAssociative();
+        $user = $this->connection->createQueryBuilder()
+            ->select('*')
+            ->from('users')
+            ->where('email = :email')
+            ->setParameter('email', $email->value())
+            ->executeQuery()
+            ->fetchAssociative();
 
-        if ($row) {
-            return $this->hydrateUser($row);
+        if ($user) {
+            return $this->hydrateUser($user);
         }
 
         return null;
@@ -89,13 +97,16 @@ final class DoctrineUserRepository implements UserRepository
 
     private function insert(User $user): void
     {
-        $this->connection->insert('users', [
-                                            'name'       => $user->name(),
-                                            'email'      => $user->email()->value(),
-                                            'password'   => $user->password()->value(),
-                                            'created_at' => $user->createdAt()->format('Y-m-d H:i:s'),
-                                            'updated_at' => $user->updatedAt()?->format('Y-m-d H:i:s'),
-                                           ]);
+        $this->connection->insert(
+            'users',
+            [
+             'name'       => $user->name(),
+             'email'      => $user->email()->value(),
+             'password'   => $user->password()->value(),
+             'created_at' => $user->createdAt()->format('Y-m-d H:i:s'),
+             'updated_at' => $user->updatedAt()?->format('Y-m-d H:i:s'),
+            ]
+        );
 
         $id = (int) $this->connection->lastInsertId();
         $user->assignId(new UserId($id));
@@ -103,25 +114,40 @@ final class DoctrineUserRepository implements UserRepository
 
     private function update(User $user): void
     {
-        $this->connection->update('users', [
-                                            'name'       => $user->name(),
-                                            'email'      => $user->email()->value(),
-                                            'password'   => $user->password()->value(),
-                                            'updated_at' => $user->updatedAt()?->format('Y-m-d H:i:s'),
-                                           ], [
-                                               'id' => $user->id()->value(),
-                                              ]);
+        $this->connection->update(
+            'users',
+            [
+             'name'       => $user->name(),
+             'email'      => $user->email()->value(),
+             'password'   => $user->password()->value(),
+             'updated_at' => $user->updatedAt()?->format('Y-m-d H:i:s'),
+            ],
+            ['id' => $user->id()->value()]
+        );
     }
 
-    private function hydrateUser(array $row): User
+    public function emailExists(Email $email): bool
+    {
+        $count = $this->connection->createQueryBuilder()
+        ->select('COUNT(id)')
+        ->from('users')
+        ->where('email = :email')
+        ->setParameter('email', $email->value())
+        ->executeQuery()
+        ->fetchOne();
+
+        return $count > 0;
+    }
+
+    private function hydrateUser(array $user): User
     {
         return User::reconstitute(
-            new UserId($row['id']),
-            $row['name'],
-            new Email($row['email']),
-            Password::fromHash($row['password']),
-            new \DateTimeImmutable($row['created_at']),
-            $row['updated_at'] ? new \DateTimeImmutable($row['updated_at']) : null
+            new UserId($user['id']),
+            $user['name'],
+            new Email($user['email']),
+            Password::fromHash($user['password']),
+            new DateTimeImmutable($user['created_at']),
+            $user['updated_at'] ? new DateTimeImmutable($user['updated_at']) : null
         );
     }
 }

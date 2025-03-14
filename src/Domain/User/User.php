@@ -6,6 +6,8 @@ use Src\Domain\Shared\ValueObjects\Email;
 use Src\Domain\User\ValueObjects\Password;
 use Src\Domain\User\Events\UserCreated;
 use Src\Domain\User\Events\UserUpdated;
+use Src\Domain\User\ValueObjects\UserId;
+use DateTimeImmutable;
 
 final class User
 {
@@ -14,8 +16,8 @@ final class User
         private string $name,
         private Email $email,
         private Password $password,
-        private \DateTimeImmutable $createdAt,
-        private ?\DateTimeImmutable $updatedAt = null
+        private DateTimeImmutable $createdAt,
+        private ?DateTimeImmutable $updatedAt
     ) {
     }
 
@@ -29,7 +31,8 @@ final class User
             $name,
             $email,
             $password,
-            new \DateTimeImmutable()
+            new DateTimeImmutable(),
+            null,
         );
 
         return $user;
@@ -94,14 +97,30 @@ final class User
         return $this->password;
     }
 
-    public function createdAt(): \DateTimeImmutable
+    public function createdAt(): DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function updatedAt(): ?\DateTimeImmutable
+    public function updatedAt(): ?DateTimeImmutable
     {
         return $this->updatedAt;
+    }
+
+    public function verifyPassword(string $plainPassword): bool
+    {
+        return $this->password->verify($plainPassword);
+    }
+
+    public function toArray(): array
+    {
+        return [
+                'id'         => $this->id->value(),
+                'email'      => $this->email->value(),
+                'name'       => $this->name,
+                'created_at' => $this->createdAt->format('Y-m-d H:i:s'),
+                'updated_at' => $this->updatedAt ? $this->updatedAt->format('Y-m-d H:i:s') : null,
+               ];
     }
 
     private function record(object $event): void

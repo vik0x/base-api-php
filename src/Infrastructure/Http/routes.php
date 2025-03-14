@@ -4,6 +4,7 @@ use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
 use Src\Infrastructure\Http\Controllers\UserController;
 use Src\Infrastructure\Http\Controllers\ActivityLogController;
+use Src\Infrastructure\Http\Controllers\AuthController;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 
@@ -16,6 +17,12 @@ return function (App $app) {
                                                      'environment' => $_ENV['APP_ENV'] ?? 'local',
                                                     ]));
             return $response->withHeader('Content-Type', 'application/json');
+        });
+
+        $group->group('/auth', function (RouteCollectorProxy $group) {
+            $group->post('/login', [AuthController::class, 'login']);
+            $group->post('/logout', [AuthController::class, 'logout']);
+            $group->post('/refresh', [AuthController::class, 'refresh']);
         });
 
         $group->group('/users', function (RouteCollectorProxy $group) {

@@ -1,6 +1,8 @@
 <?php
 
-namespace Src\Domain\ActivityLog;
+namespace Src\Domain\ActivityLog\Repositories;
+
+use Src\Domain\ActivityLog\ActivityLog;
 
 interface ActivityLogRepository
 {

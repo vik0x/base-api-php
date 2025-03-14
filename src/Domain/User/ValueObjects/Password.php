@@ -56,10 +56,14 @@ final class Password
 
     private function hash(string $value): string
     {
-        return password_hash($value, PASSWORD_ARGON2ID, [
-                                                         'memory_cost' => 65536,
-                                                         'time_cost'   => 4,
-                                                         'threads'     => 3,
-                                                        ]);
+        return password_hash(
+            $value,
+            PASSWORD_ARGON2ID,
+            [
+             'memory_cost' => 65536,
+             'time_cost'   => 4,
+             'threads'     => 3,
+            ]
+        );
     }
 }

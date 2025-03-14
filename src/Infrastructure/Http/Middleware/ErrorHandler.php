@@ -19,24 +19,28 @@ final class ErrorHandler implements MiddlewareInterface
             return $handler->handle($request);
         } catch (DomainException $e) {
             $response = new Response();
-            $response->getBody()->write(json_encode([
-                                                     'error' => $e->getMessage(),
-                                                    ]));
+            $response->getBody()->write(
+                json_encode([
+                             'error' => $e->getMessage(),
+                            ])
+            );
 
             return $response
                 ->withHeader('Content-Type', 'application/json')
-                ->withStatus($e->getCode() ?? 400);
+                ->withStatus($e->getCode() !== 0 ? $e->getCode() : 400);
         } catch (\Throwable $e) {
             $response = new Response();
-            $response->getBody()->write(json_encode([
-                                                     'error'    => 'An unexpected error occurred',
-                                                     'message'  => $e->getMessage(),
-                                                     'trace'    => $e->getTraceAsString(),
-                                                     'file'     => $e->getFile(),
-                                                     'line'     => $e->getLine(),
-                                                     'code'     => $e->getCode(),
-                                                     'previous' => $e->getPrevious(),
-                                                    ]));
+            $response->getBody()->write(
+                json_encode([
+                             'error'    => 'An unexpected error occurred',
+                             'message'  => $e->getMessage(),
+                             'trace'    => $e->getTraceAsString(),
+                             'file'     => $e->getFile(),
+                             'line'     => $e->getLine(),
+                             'code'     => $e->getCode(),
+                             'previous' => $e->getPrevious(),
+                            ])
+            );
 
             return $response
                 ->withHeader('Content-Type', 'application/json')

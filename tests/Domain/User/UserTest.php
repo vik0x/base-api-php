@@ -5,7 +5,7 @@ namespace Tests\Domain\User;
 use PHPUnit\Framework\TestCase;
 use Src\Domain\Shared\ValueObjects\Email;
 use Src\Domain\User\User;
-use Src\Domain\User\UserId;
+use Src\Domain\User\ValueObjects\UserId;
 use Src\Domain\User\ValueObjects\Password;
 
 final class UserTest extends TestCase

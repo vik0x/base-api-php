@@ -18,7 +18,7 @@ final class Version20240101000000 extends AbstractMigration
     {
         $users = $schema->createTable('users');
         
-        $users->addColumn('id', 'integer', ['autoincrement' => true, 'unsigned' => true, 'notnull' => true]);
+        $users->addColumn('id', 'bigint', ['autoincrement' => true, 'unsigned' => true]);
         $users->addColumn('name', 'string', ['length' => 255]);
         $users->addColumn('email', 'string', ['length' => 255]);
         $users->addColumn('password', 'string', ['length' => 255]);

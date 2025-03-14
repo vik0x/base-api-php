@@ -3,7 +3,7 @@
 namespace Src\Application\ActivityLog\Handler;
 
 use Src\Application\ActivityLog\Query\FindActivityLogQuery;
-use Src\Domain\ActivityLog\ActivityLogRepository;
+use Src\Domain\ActivityLog\Repositories\ActivityLogRepository;
 
 final class FindActivityLogHandler
 {

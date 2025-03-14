@@ -3,8 +3,8 @@
 namespace Src\Application\User\Handler;
 
 use Src\Application\User\Command\DeleteUserCommand;
-use Src\Domain\User\UserRepository;
-use Src\Domain\User\UserId;
+use Src\Domain\User\Repositories\UserRepository;
+use Src\Domain\User\ValueObjects\UserId;
 use Src\Domain\Shared\Exceptions\NotFoundException;
 
 final class DeleteUserHandler

@@ -1,6 +1,6 @@
 <?php
 
-namespace Src\Domain\User;
+namespace Src\Domain\User\ValueObjects;
 
 use Src\Domain\Shared\Exceptions\DomainException;
 

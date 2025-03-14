@@ -2,7 +2,7 @@
 
 namespace Src\Application\User\Handler;
 
-use Src\Domain\User\UserRepository;
+use Src\Domain\User\Repositories\UserRepository;
 use Src\Application\User\Query\SearchUserQuery;
 
 final class SearchUserHandler

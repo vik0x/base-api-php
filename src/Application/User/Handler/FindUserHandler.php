@@ -3,8 +3,8 @@
 namespace Src\Application\User\Handler;
 
 use Src\Domain\User\User;
-use Src\Domain\User\UserRepository;
-use Src\Domain\User\UserId;
+use Src\Domain\User\Repositories\UserRepository;
+use Src\Domain\User\ValueObjects\UserId;
 use Src\Domain\Shared\Exceptions\NotFoundException;
 use Src\Application\User\Query\FindUserQuery;
 

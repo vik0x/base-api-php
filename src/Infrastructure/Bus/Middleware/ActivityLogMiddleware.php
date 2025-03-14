@@ -4,7 +4,7 @@ namespace Src\Infrastructure\Bus\Middleware;
 
 use Psr\Container\ContainerInterface;
 use Src\Domain\ActivityLog\ActivityLog;
-use Src\Domain\ActivityLog\ActivityLogRepository;
+use Src\Domain\ActivityLog\Repositories\ActivityLogRepository;
 use Src\Infrastructure\Bus\Middleware;
 
 final class ActivityLogMiddleware implements Middleware
@@ -55,7 +55,7 @@ final class ActivityLogMiddleware implements Middleware
     private function extractAction(string $commandName): string
     {
         $name = str_replace('Command', '', $commandName);
-        if (preg_match('/^(Create|Update|Delete|Find|Search|Get|List|Enable|Disable|Activate|Deactivate)/', $name, $matches)) {
+        if (preg_match('/^(Create|Update|Delete|Find|Search|Get|List|Enable|Disable|Activate|Deactivate|Login)/', $name, $matches)) {
             return strtolower($matches[1]);
         }
         return 'unknown';
@@ -64,7 +64,7 @@ final class ActivityLogMiddleware implements Middleware
     private function extractEntity(string $commandName): string
     {
         $name = str_replace('Command', '', $commandName);
-        if (preg_match('/^(Create|Update|Delete|Find|Search|Get|List|Enable|Disable|Activate|Deactivate)(.+)$/', $name, $matches)) {
+        if (preg_match('/^(Create|Update|Delete|Find|Search|Get|List|Enable|Disable|Activate|Deactivate|Login)(.+)$/', $name, $matches)) {
             return strtolower($matches[2]);
         }
         return 'unknown';

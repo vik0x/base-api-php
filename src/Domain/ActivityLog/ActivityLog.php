@@ -4,7 +4,7 @@ namespace Src\Domain\ActivityLog;
 
 use DateTimeImmutable;
 use Src\Domain\Shared\ValueObjects\Id;
-use Src\Domain\User\UserId;
+use Src\Domain\User\ValueObjects\UserId;
 
 final class ActivityLog
 {

@@ -2,7 +2,9 @@
 
 namespace Src\Domain\Shared\Exceptions;
 
-abstract class DomainException extends \DomainException
+use Exception;
+
+abstract class DomainException extends Exception
 {
     public function __construct(string $message, int $code = 0, \Throwable $previous = null)
     {

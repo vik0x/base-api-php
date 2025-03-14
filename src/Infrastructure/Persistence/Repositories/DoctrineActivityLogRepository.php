@@ -4,7 +4,7 @@ namespace Src\Infrastructure\Persistence\Repositories;
 
 use Doctrine\DBAL\Connection;
 use Src\Domain\ActivityLog\ActivityLog;
-use Src\Domain\ActivityLog\ActivityLogRepository;
+use Src\Domain\ActivityLog\Repositories\ActivityLogRepository;
 use Src\Domain\Shared\ValueObjects\Id;
 
 final class DoctrineActivityLogRepository implements ActivityLogRepository

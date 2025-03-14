@@ -3,10 +3,13 @@
 use DI\Container;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
-use Src\Domain\User\UserRepository;
-use Src\Domain\ActivityLog\ActivityLogRepository;
+use Src\Domain\User\Repositories\UserRepository;
+use Src\Domain\ActivityLog\Repositories\ActivityLogRepository;
+use Src\Domain\Auth\Repositories\RefreshTokenRepository;
+use Src\Infrastructure\Auth\JwtService;
 use Src\Infrastructure\Persistence\Repositories\DoctrineUserRepository;
 use Src\Infrastructure\Persistence\Repositories\DoctrineActivityLogRepository;
+use Src\Infrastructure\Persistence\Repositories\DoctrineRefreshTokenRepository;
 use Src\Infrastructure\Http\Controller;
 use Src\Infrastructure\Http\Services\FractalService;
 use Src\Infrastructure\Bus\CommandBus;
@@ -28,6 +31,17 @@ return function (Container $container) {
         return new DoctrineActivityLogRepository(
             $container->get(Connection::class)
         );
+    });
+
+    $container->set(RefreshTokenRepository::class, function (Container $container) {
+        return new DoctrineRefreshTokenRepository(
+            $container->get(Connection::class)
+        );
+    });
+
+    $container->set(JwtService::class, function (Container $container) {
+        $config = require __DIR__ . '/../jwt.php';
+        return new JwtService($config['secret'], $config['expiration']);
     });
 
     $container->set(Controller::class, function (Container $container) {

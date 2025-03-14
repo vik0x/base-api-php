@@ -11,6 +11,7 @@
     "php": "^8.2",
     "doctrine/dbal": "^3.7",
     "doctrine/migrations": "^3.7",
+    "firebase/php-jwt": "^6.11",
     "league/fractal": "^0.20.2",
     "php-di/php-di": "^7.0",
     "ramsey/uuid": "^4.7",

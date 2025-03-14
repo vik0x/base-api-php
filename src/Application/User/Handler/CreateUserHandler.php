@@ -5,7 +5,7 @@ namespace Src\Application\User\Handler;
 use Src\Application\User\Command\CreateUserCommand;
 use Src\Domain\Shared\Exceptions\EmailAlreadyExistsException;
 use Src\Domain\Shared\Exceptions\InvalidArgumentException;
-use Src\Domain\User\UserRepository;
+use Src\Domain\User\Repositories\UserRepository;
 use Src\Domain\User\User;
 use Src\Domain\Shared\ValueObjects\Email;
 use Src\Domain\User\ValueObjects\Password;
