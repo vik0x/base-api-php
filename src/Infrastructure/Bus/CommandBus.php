@@ -39,7 +39,7 @@ class CommandBus
     private function resolveHandler(object $command): callable
     {
         $commandClass = get_class($command);
-        $handlerClass = preg_replace('/\\\\Command\\\\(.*)(Command|Query)$/', '\\\\Handler\\\\${1}Handler', $commandClass) ?? '';
+        $handlerClass = preg_replace('/\\\\(Command|Query)\\\\(.*)(Command|Query)$/', '\\\\Handler\\\\${2}Handler', $commandClass) ?? '';
 
         if (! class_exists($handlerClass)) {
             throw new RuntimeException('Handler not found for ' . $commandClass);
