@@ -49,7 +49,16 @@ final class UserController extends Controller
 
     public function list(Request $request, Response $response): Response
     {
-        $command = new SearchUserQuery($request->getQueryParams());
+        $queryParams = $request->getQueryParams();
+
+        /** @var array{page?: int, perPage?: int, search?: string} $params */
+        $params = [
+                   'page'    => isset($queryParams['page']) ? (int) $queryParams['page'] : 1,
+                   'perPage' => isset($queryParams['perPage']) ? (int) $queryParams['perPage'] : 15,
+                   'search'  => isset($queryParams['search']) ? (string) $queryParams['search'] : '',
+                  ];
+
+        $command = new SearchUserQuery($params);
         $result  = $this->commandBus->dispatch($command);
 
         $meta = [

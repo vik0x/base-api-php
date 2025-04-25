@@ -10,82 +10,121 @@ use Src\Domain\Shared\ValueObjects\Email;
 use Src\Domain\User\ValueObjects\Password;
 use DateTimeImmutable;
 
-final class DoctrineUserRepository implements UserRepository
+class DoctrineUserRepository implements UserRepository
 {
+    private string $table = 'users';
+
     public function __construct(private Connection $connection)
     {
     }
 
     public function find(UserId $id): ?User
     {
-        $user = $this->connection->createQueryBuilder()
-            ->select('*')
-            ->from('users')
-            ->where('id = :id')
-            ->setParameter('id', $id->value())
-            ->executeQuery()
-            ->fetchAssociative();
+        $stmt = $this->connection->prepare('SELECT * FROM ' . $this->table . ' WHERE id = :id');
+        $stmt->bindValue(':id', $id->value());
+        $row = $stmt->executeQuery()->fetchAssociative();
 
-        if ($user) {
-            return $this->hydrateUser($user);
+        if (! $row) {
+            return null;
         }
 
-        return null;
+        return $this->hydrateUser($row);
     }
 
     public function findByEmail(Email $email): ?User
     {
-        $user = $this->connection->createQueryBuilder()
-            ->select('*')
-            ->from('users')
-            ->where('email = :email')
-            ->setParameter('email', $email->value())
-            ->executeQuery()
-            ->fetchAssociative();
+        $stmt = $this->connection->prepare('SELECT * FROM ' . $this->table . ' WHERE email = :email');
+        $stmt->bindValue(':email', $email->value());
+        $row = $stmt->executeQuery()->fetchAssociative();
 
-        if ($user) {
-            return $this->hydrateUser($user);
+        if (! $row) {
+            return null;
         }
 
-        return null;
+        return $this->hydrateUser($row);
     }
 
     public function save(User $user): void
     {
-        if ($user->id() === null) {
-            $this->insert($user);
+        $data = [
+                 'name'       => $user->name(),
+                 'email'      => $user->email()->value(),
+                 'password'   => $user->password()->value(),
+                 'created_at' => $user->createdAt()->format('Y-m-d H:i:s'),
+                 'updated_at' => $user->updatedAt() ? $user->updatedAt()->format('Y-m-d H:i:s') : null,
+                ];
+
+        if ($user->id()) {
+            $this->connection->update(
+                $this->table,
+                $data,
+                ['id' => $user->id()->value()]
+            );
         } else {
-            $this->update($user);
+            $this->connection->insert($this->table, $data);
+            $userId = new UserId((int) $this->connection->lastInsertId());
+            $user->assignId($userId);
         }
     }
 
     public function delete(UserId $id): void
     {
-        $this->connection->delete('users', ['id' => $id->value()]);
+        $this->connection->delete($this->table, ['id' => $id->value()]);
     }
 
+    public function emailExists(Email $email): bool
+    {
+        $stmt = $this->connection->prepare('SELECT COUNT(*) FROM ' . $this->table . ' WHERE email = :email');
+        $stmt->bindValue(':email', $email->value());
+        $count = (int) $stmt->executeQuery()->fetchOne();
+
+        return $count > 0;
+    }
+
+    /**
+     * @param array<int, string> $criteria
+     * @return array<string, mixed>
+     */
     public function search(array $criteria, int $page = 1, int $perPage = 15): array
     {
-        $qb = $this->connection->createQueryBuilder();
-        $qb->select('*')
-           ->from('users');
+        $offset     = ($page - 1) * $perPage;
+        $query      = 'SELECT * FROM ' . $this->table . ' ';
+        $countQuery = 'SELECT COUNT(*) FROM ' . $this->table . ' ';
+        $params     = [];
 
-        foreach ($criteria as $field => $value) {
-            $qb->andWhere($field . ' LIKE :' . $field)
-               ->setParameter($field, '%' . $value . '%');
+        $whereClauses = [];
+        if (! empty($criteria)) {
+            foreach ($criteria as $index => $term) {
+                if (is_string($term) && $term !== '') {
+                    $whereClauses[]          = '(name LIKE :term' . $index . ' OR email LIKE :term' . $index . ')';
+                    $params['term' . $index] = '%' . $term . '%';
+                }
+            }
         }
 
-        $total = $this->connection->fetchOne(
-            'SELECT COUNT(*) FROM (' . $qb->getSQL() . ') as count_table',
-            $qb->getParameters()
-        );
+        if (! empty($whereClauses)) {
+            $whereClause = ' WHERE ' . implode(' OR ', $whereClauses);
+            $query      .= $whereClause;
+            $countQuery .= $whereClause;
+        }
 
-        $qb->setFirstResult(($page - 1) * $perPage)
-           ->setMaxResults($perPage)
-           ->orderBy('created_at', 'DESC');
+        $query .= ' ORDER BY created_at DESC LIMIT ' . $perPage . ' OFFSET ' . $offset;
 
-        $results = $qb->executeQuery()->fetchAllAssociative();
-        $users   = array_map([$this, 'hydrateUser'], $results);
+        $stmt      = $this->connection->prepare($query);
+        $countStmt = $this->connection->prepare($countQuery);
+
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(':' . $key, $value);
+            $countStmt->bindValue(':' . $key, $value);
+        }
+
+        $rows  = $stmt->executeQuery()->fetchAllAssociative();
+        $total = (int) $countStmt->executeQuery()->fetchOne();
+
+        $users = [];
+        foreach ($rows as $row) {
+            $users[] = $this->hydrateUser($row);
+        }
 
         return [
                 'data'     => $users,
@@ -95,59 +134,25 @@ final class DoctrineUserRepository implements UserRepository
                ];
     }
 
-    private function insert(User $user): void
-    {
-        $this->connection->insert(
-            'users',
-            [
-             'name'       => $user->name(),
-             'email'      => $user->email()->value(),
-             'password'   => $user->password()->value(),
-             'created_at' => $user->createdAt()->format('Y-m-d H:i:s'),
-             'updated_at' => $user->updatedAt()?->format('Y-m-d H:i:s'),
-            ]
-        );
-
-        $id = (int) $this->connection->lastInsertId();
-        $user->assignId(new UserId($id));
-    }
-
-    private function update(User $user): void
-    {
-        $this->connection->update(
-            'users',
-            [
-             'name'       => $user->name(),
-             'email'      => $user->email()->value(),
-             'password'   => $user->password()->value(),
-             'updated_at' => $user->updatedAt()?->format('Y-m-d H:i:s'),
-            ],
-            ['id' => $user->id()->value()]
-        );
-    }
-
-    public function emailExists(Email $email): bool
-    {
-        $count = $this->connection->createQueryBuilder()
-        ->select('COUNT(id)')
-        ->from('users')
-        ->where('email = :email')
-        ->setParameter('email', $email->value())
-        ->executeQuery()
-        ->fetchOne();
-
-        return $count > 0;
-    }
-
+    /**
+     * @param array<string, mixed> $user
+     */
     private function hydrateUser(array $user): User
     {
+        $userId    = new UserId((int) $user['id']);
+        $name      = (string) $user['name'];
+        $email     = new Email((string) $user['email']);
+        $password  = Password::fromHash((string) $user['password']);
+        $createdAt = new DateTimeImmutable((string) $user['created_at']);
+        $updatedAt = $user['updated_at'] ? new DateTimeImmutable((string) $user['updated_at']) : null;
+
         return User::reconstitute(
-            new UserId($user['id']),
-            $user['name'],
-            new Email($user['email']),
-            Password::fromHash($user['password']),
-            new DateTimeImmutable($user['created_at']),
-            $user['updated_at'] ? new DateTimeImmutable($user['updated_at']) : null
+            $userId,
+            $name,
+            $email,
+            $password,
+            $createdAt,
+            $updatedAt
         );
     }
 }

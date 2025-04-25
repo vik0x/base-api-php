@@ -6,6 +6,6 @@ final class InvalidEmailException extends DomainException
 {
     public function __construct(string $message = '')
     {
-        parent::__construct($message ?: 'Invalid email');
+        parent::__construct($message !== '' ? $message : 'Invalid email');
     }
 }

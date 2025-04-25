@@ -19,7 +19,7 @@ final class CreateUserHandler
 
     public function __invoke(CreateUserCommand $command): void
     {
-        if (empty($command->name())) {
+        if ($command->name() === '') {
             throw new InvalidArgumentException('Name is required');
         }
 

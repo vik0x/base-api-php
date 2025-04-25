@@ -2,7 +2,7 @@
 
 namespace Src\Domain\User\ValueObjects;
 
-use Src\Domain\Shared\Exceptions\DomainException;
+use Src\Domain\Shared\Exceptions\InvalidIdException;
 
 final class UserId
 {
@@ -29,7 +29,7 @@ final class UserId
     private function validate(int $value): void
     {
         if ($value <= 0) {
-            throw new DomainException('User id must be greater than zero');
+            throw new InvalidIdException('User id must be greater than zero');
         }
     }
 }

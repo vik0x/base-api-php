@@ -24,7 +24,7 @@ final class RefreshTokenValue
 
     private function validate(string $value): void
     {
-        if (empty($value)) {
+        if ($value === '') {
             throw new InvalidArgumentException('Refresh token value cannot be empty');
         }
     }

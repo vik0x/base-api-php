@@ -3,8 +3,10 @@
 namespace Src\Infrastructure\Bus\Middleware;
 
 use Psr\Container\ContainerInterface;
+use ReflectionClass;
 use Src\Domain\ActivityLog\ActivityLog;
 use Src\Domain\ActivityLog\Repositories\ActivityLogRepository;
+use Src\Domain\User\ValueObjects\UserId;
 use Src\Infrastructure\Bus\Middleware;
 
 final class ActivityLogMiddleware implements Middleware
@@ -15,7 +17,10 @@ final class ActivityLogMiddleware implements Middleware
     ) {
     }
 
-    public function execute($command, callable $next)
+    /**
+     * @return mixed
+     */
+    public function execute(object $command, callable $next): mixed
     {
         $result = $next($command);
 
@@ -24,7 +29,7 @@ final class ActivityLogMiddleware implements Middleware
         return $result;
     }
 
-    private function logActivity($command): void
+    private function logActivity(object $command): void
     {
         $commandClass = get_class($command);
         $parts        = explode('\\', $commandClass);
@@ -35,18 +40,23 @@ final class ActivityLogMiddleware implements Middleware
 
         $entityId = null;
         if (method_exists($command, 'id')) {
-            $entityId = $command->id();
+            $entityId = (string) $command->id();
         }
 
         $data = $this->extractData($command);
 
-      // Create and save activity log
+        $userId = null;
+        if ($this->currentUserId !== null) {
+            $userId = new UserId((int) $this->currentUserId);
+        }
+
+        // Create and save activity log
         $activityLog = ActivityLog::create(
             $action,
             $entity,
             $entityId,
             $data,
-            $this->currentUserId
+            $userId
         );
 
         $this->activityLogRepository->save($activityLog);
@@ -70,17 +80,21 @@ final class ActivityLogMiddleware implements Middleware
         return 'unknown';
     }
 
-    private function extractData($command): array
+    /**
+     * @param object $command
+     * @return array<string, mixed>
+     */
+    private function extractData(object $command): array
     {
         $data       = [];
-        $reflection = new \ReflectionClass($command);
+        $reflection = new ReflectionClass($command);
         $properties = $reflection->getProperties();
 
         foreach ($properties as $property) {
             $property->setAccessible(true);
             $propertyName = $property->getName();
 
-            if (in_array($propertyName, ['password', 'token', 'secret'])) {
+            if (in_array($propertyName, ['password', 'token', 'secret'], true)) {
                 continue;
             }
 

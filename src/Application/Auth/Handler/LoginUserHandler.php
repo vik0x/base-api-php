@@ -19,6 +19,9 @@ final class LoginUserHandler
     ) {
     }
 
+    /**
+     * @return array{access_token: string, refresh_token: string, token_type: string, expires_in: int, user: array<string, mixed>}
+     */
     public function __invoke(LoginUserCommand $command): array
     {
         $email = new Email($command->email());
@@ -30,7 +33,11 @@ final class LoginUserHandler
 
         $accessToken  = $this->jwtService->generateToken($user);
         $refreshToken = RefreshToken::create($user->id()->value());
-        $decodedToken = $this->jwtService->validateToken($accessToken);
+        try {
+            $decodedToken = $this->jwtService->validateToken($accessToken);
+        } catch (\Exception $e) {
+            throw new InvalidCredentialsException();
+        }
 
         $this->refreshTokenRepository->save($refreshToken);
 
@@ -38,7 +45,7 @@ final class LoginUserHandler
                 'access_token'  => $accessToken,
                 'refresh_token' => $refreshToken->token()->value(),
                 'token_type'    => 'Bearer',
-                'expires_in'    => $decodedToken['exp'] - time(),
+                'expires_in'    => (int) ($decodedToken['exp'] - time()),
                 'user'          => $user->toArray(),
                ];
     }

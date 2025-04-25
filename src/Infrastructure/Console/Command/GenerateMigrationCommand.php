@@ -38,7 +38,7 @@ final class GenerateMigrationCommand extends Command
         try {
             $name      = $input->getArgument('name');
             $version   = date('YmdHis');
-            $name      = preg_replace('/[^a-zA-Z0-9_]/', '', $name);
+            $name      = (string) preg_replace('/[^a-zA-Z0-9_]/', '', $name);
             $className = sprintf('%s_%s', $version, mb_strtolower($name));
 
             $migrationContent = $this->getMigrationTemplate($className);

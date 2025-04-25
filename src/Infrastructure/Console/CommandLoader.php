@@ -16,7 +16,7 @@ final class CommandLoader
         $migrationsConfig = require __DIR__ . '/../Config/migrations.php';
         $migrationsPath   = $migrationsConfig['migrations_paths']['Src\Infrastructure\Persistence\Migrations'];
 
-        foreach (DoctrineCommandsFactory::createCommands() as $command) {
+        foreach (DoctrineCommandsFactory::create() as $command) {
             $application->add($command);
         }
 

@@ -11,6 +11,9 @@ final class SearchUserHandler
     {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function __invoke(SearchUserQuery $query): array
     {
         return $this->repository->search($query->criteria(), $query->page(), $query->perPage());

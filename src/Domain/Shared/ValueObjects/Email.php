@@ -26,7 +26,7 @@ final class Email
 
     private function validate(string $value): void
     {
-        if (empty($value)) {
+        if ($value === '') {
             throw new InvalidEmailException('Email cannot be empty');
         }
 
@@ -42,7 +42,10 @@ final class Email
                            'tempmail.com',
                            'throwaway.com',
                           ];
-        $domain         = substr(strrchr($value, '@'), 1);
+
+        $atPos  = strrpos($value, '@');
+        $domain = $atPos !== false ? substr($value, $atPos + 1) : '';
+
         if (in_array($domain, $blockedDomains, true)) {
             throw new InvalidEmailException('Email domain not allowed');
         }

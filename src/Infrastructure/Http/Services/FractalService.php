@@ -7,6 +7,7 @@ use League\Fractal\Resource\Item;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Pagination\PagerfantaPaginatorAdapter;
 use League\Fractal\Serializer\JsonApiSerializer;
+use League\Fractal\TransformerAbstract;
 
 class FractalService
 {
@@ -18,20 +19,49 @@ class FractalService
         $this->fractal->setSerializer(new JsonApiSerializer());
     }
 
-    public function item($data, $transformer, string $resourceKey = null): array
+    /**
+     * @param mixed $data
+     * @param TransformerAbstract $transformer
+     * @param string|null $resourceKey
+     * @return array<string, mixed>
+     */
+    public function item($data, $transformer, ?string $resourceKey = null): array
     {
         $resource = new Item($data, $transformer, $resourceKey);
-        return $this->fractal->createData($resource)->toArray();
+        $result   = $this->fractal->createData($resource)->toArray();
+
+        if (! is_array($result) || empty($result)) {
+            /** @var array<string, mixed> */
+            return [];
+        }
+
+        /** @var array<string, mixed> */
+        return $result;
     }
 
-    public function collection($data, $transformer, string $resourceKey = null, array $meta = []): array
+    /**
+     * @param mixed $data
+     * @param TransformerAbstract $transformer
+     * @param string|null $resourceKey
+     * @param array<string, mixed> $meta
+     * @return array<string, mixed>
+     */
+    public function collection($data, $transformer, ?string $resourceKey = null, array $meta = []): array
     {
         $resource = new Collection($data, $transformer, $resourceKey);
 
-        if (! empty($meta)) {
+        if ($meta !== []) {
             $resource->setMeta($meta);
         }
 
-        return $this->fractal->createData($resource)->toArray();
+        $result = $this->fractal->createData($resource)->toArray();
+
+        if (! is_array($result) || empty($result)) {
+            /** @var array<string, mixed> */
+            return [];
+        }
+
+        /** @var array<string, mixed> */
+        return $result;
     }
 }

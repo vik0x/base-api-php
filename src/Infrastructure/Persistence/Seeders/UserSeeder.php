@@ -57,10 +57,14 @@ final class UserSeeder extends DoctrineSeeder
             return;
         }
 
+        $name     = (string) $userData['name'];
+        $email    = new Email((string) $userData['email']);
+        $password = new Password((string) $userData['password']);
+
         $user = User::create(
-            $userData['name'],
-            new Email($userData['email']),
-            new Password($userData['password'])
+            $name,
+            $email,
+            $password
         );
 
         $this->connection->insert('users', [
@@ -73,8 +77,8 @@ final class UserSeeder extends DoctrineSeeder
 
         echo sprintf(
             "Created user: %s (%s)\n",
-            $userData['name'],
-            $userData['email']
+            (string) $userData['name'],
+            (string) $userData['email']
         );
     }
 }

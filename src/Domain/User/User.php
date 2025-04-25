@@ -112,10 +112,13 @@ final class User
         return $this->password->verify($plainPassword);
     }
 
+    /**
+     * @return array{id: int|null, email: string, name: string, created_at: string, updated_at: string|null}
+     */
     public function toArray(): array
     {
         return [
-                'id'         => $this->id->value(),
+                'id'         => $this->id?->value(),
                 'email'      => $this->email->value(),
                 'name'       => $this->name,
                 'created_at' => $this->createdAt->format('Y-m-d H:i:s'),

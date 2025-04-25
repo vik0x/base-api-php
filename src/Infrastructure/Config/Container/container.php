@@ -18,7 +18,11 @@ use Src\Infrastructure\Bus\Middleware\ActivityLogMiddleware;
 return function (Container $container) {
     $container->set(Connection::class, function () {
         $config = require __DIR__ . '/../database.php';
-        return DriverManager::getConnection($config['connections'][$config['default']]);
+
+        /** @var array{driver: 'pdo_mysql'|'pdo_pgsql'|'pdo_sqlite'|'pdo_sqlsrv'|'mysqli'|'oci8'|'sqlsrv', host: string, port: int, dbname: string, user: string, password: string} $connectionConfig */
+        $connectionConfig = $config['connections'][$config['default']];
+
+        return DriverManager::getConnection($connectionConfig);
     });
 
     $container->set(UserRepository::class, function (Container $container) {

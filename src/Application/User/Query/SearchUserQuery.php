@@ -8,7 +8,10 @@ final class SearchUserQuery
     private int $perPage;
     private string $search;
 
-    public function __construct($params)
+    /**
+     * @param array{page?: int, perPage?: int, search?: string} $params
+     */
+    public function __construct(array $params)
     {
         $this->page    = $params['page'] ?? 1;
         $this->perPage = $params['perPage'] ?? 15;
@@ -25,6 +28,9 @@ final class SearchUserQuery
         return $this->perPage;
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function criteria(): array
     {
         if ($this->search) {

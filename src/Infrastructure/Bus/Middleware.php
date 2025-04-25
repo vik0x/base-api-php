@@ -4,5 +4,8 @@ namespace Src\Infrastructure\Bus;
 
 interface Middleware
 {
-    public function execute($command, callable $next);
+    /**
+     * @return mixed
+     */
+    public function execute(object $command, callable $next): mixed;
 }

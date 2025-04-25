@@ -35,7 +35,7 @@ final class Password
 
     private function validate(string $value): void
     {
-        if (empty($value)) {
+        if ($value === '') {
             throw new InvalidPasswordException('Password cannot be empty');
         }
 

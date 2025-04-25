@@ -11,7 +11,10 @@ final class ListActivityLogsHandler
     {
     }
 
-    public function __invoke(ListActivityLogsQuery $query)
+    /**
+     * @return array<string, mixed>
+     */
+    public function __invoke(ListActivityLogsQuery $query): array
     {
         return $this->repository->findAll(
             $query->page(),

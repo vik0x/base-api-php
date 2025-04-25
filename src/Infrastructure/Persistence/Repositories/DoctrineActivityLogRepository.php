@@ -6,14 +6,14 @@ use Doctrine\DBAL\Connection;
 use Src\Domain\ActivityLog\ActivityLog;
 use Src\Domain\ActivityLog\Repositories\ActivityLogRepository;
 use Src\Domain\Shared\ValueObjects\Id;
+use Src\Domain\User\ValueObjects\UserId;
 
-final class DoctrineActivityLogRepository implements ActivityLogRepository
+class DoctrineActivityLogRepository implements ActivityLogRepository
 {
-    private Connection $connection;
+    private string $table = 'activity_logs';
 
-    public function __construct(Connection $connection)
+    public function __construct(private Connection $connection)
     {
-        $this->connection = $connection;
     }
 
     public function save(ActivityLog $activityLog): void
@@ -23,31 +23,26 @@ final class DoctrineActivityLogRepository implements ActivityLogRepository
                  'entity'     => $activityLog->entity(),
                  'entity_id'  => $activityLog->entityId(),
                  'data'       => json_encode($activityLog->data()),
-                 'user_id'    => $activityLog->userId(),
+                 'user_id'    => $activityLog->userId() ? $activityLog->userId()->value() : null,
                  'created_at' => $activityLog->createdAt()->format('Y-m-d H:i:s'),
                 ];
 
-        if ($activityLog->id() === null) {
-            $this->connection->insert('activity_logs', $data);
-        } else {
+        if ($activityLog->id()) {
             $this->connection->update(
-                'activity_logs',
+                $this->table,
                 $data,
                 ['id' => $activityLog->id()->value()]
             );
+        } else {
+            $this->connection->insert($this->table, $data);
         }
     }
 
     public function findById(int $id): ?ActivityLog
     {
-        $stmt = $this->connection->createQueryBuilder()
-        ->select('*')
-        ->from('activity_logs')
-        ->where('id = :id')
-        ->setParameter('id', $id)
-        ->executeQuery();
-
-        $row = $stmt->fetchAssociative();
+        $stmt = $this->connection->prepare('SELECT * FROM ' . $this->table . ' WHERE id = :id');
+        $stmt->bindValue(':id', $id);
+        $row = $stmt->executeQuery()->fetchAssociative();
 
         if (! $row) {
             return null;
@@ -56,77 +51,90 @@ final class DoctrineActivityLogRepository implements ActivityLogRepository
         return $this->hydrateActivityLog($row);
     }
 
+    /**
+     * @param array<int, string> $filters
+     * @return array<string, mixed>
+     */
     public function findAll(int $page = 1, int $perPage = 15, array $filters = []): array
     {
-        $offset = ($page - 1) * $perPage;
+        $offset     = ($page - 1) * $perPage;
+        $query      = 'SELECT * FROM ' . $this->table . ' ';
+        $countQuery = 'SELECT COUNT(*) FROM ' . $this->table . ' ';
+        $params     = [];
 
-        $queryBuilder = $this->connection->createQueryBuilder()
-        ->select('*')
-        ->from('activity_logs')
-        ->orderBy('created_at', 'DESC')
-        ->setMaxResults($perPage)
-        ->setFirstResult($offset);
-
-      // Apply filters if any
-        if (isset($filters['entity'])) {
-            $queryBuilder->andWhere('entity = :entity')
-            ->setParameter('entity', $filters['entity']);
+        $filterClauses = [];
+        if (! empty($filters)) {
+            foreach ($filters as $index => $filter) {
+                // Solo construir las condiciones si son cadenas con data válida
+                if (is_string($filter) && $filter !== '') {
+                    $filterClauses[]            = '(entity LIKE :entity' . $index . ' OR action LIKE :action' . $index . ' OR user_id LIKE :user_id' . $index . ')';
+                    $params['entity' . $index]  = '%' . $filter . '%';
+                    $params['action' . $index]  = '%' . $filter . '%';
+                    $params['user_id' . $index] = '%' . $filter . '%';
+                }
+            }
         }
 
-        if (isset($filters['action'])) {
-            $queryBuilder->andWhere('action = :action')
-            ->setParameter('action', $filters['action']);
+        if (! empty($filterClauses)) {
+            $whereClause = ' WHERE ' . implode(' AND ', $filterClauses);
+            $query      .= $whereClause;
+            $countQuery .= $whereClause;
         }
 
-        if (isset($filters['user_id'])) {
-            $queryBuilder->andWhere('user_id = :user_id')
-            ->setParameter('user_id', $filters['user_id']);
+        $query .= ' ORDER BY created_at DESC LIMIT ' . $perPage . ' OFFSET ' . $offset;
+
+        $stmt      = $this->connection->prepare($query);
+        $countStmt = $this->connection->prepare($countQuery);
+
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(':' . $key, $value);
+            $countStmt->bindValue(':' . $key, $value);
         }
 
-        $stmt = $queryBuilder->executeQuery();
-        $rows = $stmt->fetchAllAssociative();
+        $rows  = $stmt->executeQuery()->fetchAllAssociative();
+        $total = (int) $countStmt->executeQuery()->fetchOne();
 
-      // Count total records for pagination
-        $countQueryBuilder = $this->connection->createQueryBuilder()
-        ->select('COUNT(*) as total')
-        ->from('activity_logs');
-
-      // Apply the same filters to the count query
-        if (isset($filters['entity'])) {
-            $countQueryBuilder->andWhere('entity = :entity')
-            ->setParameter('entity', $filters['entity']);
+        $logs = [];
+        foreach ($rows as $row) {
+            $logs[] = $this->hydrateActivityLog($row);
         }
-
-        if (isset($filters['action'])) {
-            $countQueryBuilder->andWhere('action = :action')
-            ->setParameter('action', $filters['action']);
-        }
-
-        if (isset($filters['user_id'])) {
-            $countQueryBuilder->andWhere('user_id = :user_id')
-            ->setParameter('user_id', $filters['user_id']);
-        }
-
-        $countStmt = $countQueryBuilder->executeQuery();
-        $total     = (int) $countStmt->fetchOne();
-
-        $logs = array_map([$this, 'hydrateActivityLog'], $rows);
 
         return [
-                'data'  => $logs,
-                'total' => $total,
+                'data'     => $logs,
+                'total'    => $total,
+                'page'     => $page,
+                'per_page' => $perPage,
                ];
     }
 
+    /**
+     * @param array<string, mixed> $row
+     */
     private function hydrateActivityLog(array $row): ActivityLog
     {
+        $action   = (string) $row['action'];
+        $entity   = (string) $row['entity'];
+        $entityId = $row['entity_id'] !== null ? (string) $row['entity_id'] : null;
+        $data     = json_decode((string) $row['data'], true);
+
+        /** @var array<string, mixed> $data */
+        $data = is_array($data) ? $data : [];
+
+        $userId = null;
+        if ($row['user_id'] !== null) {
+            $userId = new UserId((int) $row['user_id']);
+        }
+
+        $id = new Id((int) $row['id']);
+
         return new ActivityLog(
-            $row['action'],
-            $row['entity'],
-            $row['entity_id'],
-            json_decode($row['data'], true),
-            $row['user_id'],
-            new Id($row['id'])
+            $action,
+            $entity,
+            $entityId,
+            $data,
+            $userId,
+            $id,
+            new \DateTimeImmutable((string) $row['created_at'])
         );
     }
 }

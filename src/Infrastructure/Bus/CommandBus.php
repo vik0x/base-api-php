@@ -3,9 +3,14 @@
 namespace Src\Infrastructure\Bus;
 
 use Psr\Container\ContainerInterface;
+use ReflectionClass;
+use RuntimeException;
 
 class CommandBus
 {
+    /**
+     * @var array<int, Middleware>
+     */
     private array $middlewares = [];
 
     public function __construct(private ContainerInterface $container)
@@ -17,7 +22,10 @@ class CommandBus
         $this->middlewares[] = $middleware;
     }
 
-    public function dispatch(object $command)
+    /**
+     * @return mixed
+     */
+    public function dispatch(object $command): mixed
     {
         $handler = $this->resolveHandler($command);
 
@@ -25,13 +33,16 @@ class CommandBus
         return $chain($command);
     }
 
+    /**
+     * @return callable
+     */
     private function resolveHandler(object $command): callable
     {
         $commandClass = get_class($command);
-        $handlerClass = str_replace(['Query', 'Command'], 'Handler', $commandClass);
+        $handlerClass = preg_replace('/\\\\Command\\\\(.*)(Command|Query)$/', '\\\\Handler\\\\${1}Handler', $commandClass) ?? '';
 
         if (! class_exists($handlerClass)) {
-            throw new \RuntimeException('Handler not found for ' . $commandClass);
+            throw new RuntimeException('Handler not found for ' . $commandClass);
         }
 
         if (! $this->container->has($handlerClass)) {
@@ -40,12 +51,16 @@ class CommandBus
             $handler = $this->container->get($handlerClass);
         }
 
-        return $handler;
+        return fn($command) => $handler->__invoke($command);
     }
 
-    private function createHandler(string $handlerClass)
+    /**
+     * @return object
+     * @param class-string $handlerClass
+     */
+    private function createHandler(string $handlerClass): object
     {
-        $reflection  = new \ReflectionClass($handlerClass);
+        $reflection  = new ReflectionClass($handlerClass);
         $constructor = $reflection->getConstructor();
 
         if (! $constructor) {
@@ -57,7 +72,7 @@ class CommandBus
             $type = $param->getType();
 
             if (! $type || $type->isBuiltin()) {
-                throw new \RuntimeException('Cannot autowire parameter ' . $param->getName() . ' for ' . $handlerClass);
+                throw new RuntimeException('Cannot autowire parameter ' . $param->getName() . ' for ' . $handlerClass);
             }
 
             $typeName = $type->getName();
@@ -65,22 +80,26 @@ class CommandBus
             if ($this->container->has($typeName)) {
                 $dependencies[] = $this->container->get($typeName);
             } else {
-                throw new \RuntimeException('Dependency ' . $typeName . ' not found in container');
+                throw new RuntimeException('Dependency ' . $typeName . ' not found in container');
             }
         }
 
         return $reflection->newInstanceArgs($dependencies);
     }
 
-    private function createMiddlewareChain($handler): callable
+    /**
+     * @param callable $handler
+     * @return callable
+     */
+    private function createMiddlewareChain(callable $handler): callable
     {
-        $chain = function ($command) use ($handler) {
+        $chain = function (object $command) use ($handler) {
             return $handler($command);
         };
 
         foreach (array_reverse($this->middlewares) as $middleware) {
             $next  = $chain;
-            $chain = function ($command) use ($middleware, $next) {
+            $chain = function (object $command) use ($middleware, $next) {
                 return $middleware->execute($command, $next);
             };
         }

@@ -13,7 +13,7 @@ use Src\Domain\Shared\ValueObjects\Email;
 
 class AuthController extends Controller
 {
-    public function login(Request $request, Response $response)
+    public function login(Request $request, Response $response): Response
     {
         $data = json_decode($request->getBody()->getContents(), true);
         if (
@@ -22,13 +22,14 @@ class AuthController extends Controller
         ) {
             return $this->jsonResponse($response, ['message' => 'Email and password are required'], 400);
         }
+        $email = new Email($data['email']);
 
-        $token = $this->commandBus->dispatch(new LoginUserCommand($data['email'], $data['password']));
+        $token = $this->commandBus->dispatch(new LoginUserCommand($email->value(), $data['password']));
 
         return $this->jsonResponse($response, $token, 200);
     }
 
-    public function logout(Request $request, Response $response)
+    public function logout(Request $request, Response $response): Response
     {
         $token = $this->getTokenFromHeader($request);
         $this->commandBus->dispatch(new LogoutUserCommand($token, null));
@@ -36,16 +37,10 @@ class AuthController extends Controller
         return $this->jsonResponse($response, ['message' => 'User logged out successfully'], 200);
     }
 
-    public function refresh(Request $request, Response $response)
+    public function refresh(Request $request, Response $response): Response
     {
         $token = $this->getTokenFromHeader($request);
-
-        if (! $token) {
-            throw new InvalidTokenException('Invalid token', 401);
-        }
-
         $token = $this->commandBus->dispatch(new RefreshTokenCommand($token));
-
         return $this->jsonResponse($response, $token, 200);
     }
 

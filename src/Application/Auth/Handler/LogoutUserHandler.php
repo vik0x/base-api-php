@@ -19,7 +19,7 @@ final class LogoutUserHandler
         $this->refreshTokenRepository->deleteByToken($tokenValue);
 
         if ($command->userId()) {
-            $userId = new UserId($command->userId());
+            $userId = new UserId((int) $command->userId());
             $this->refreshTokenRepository->deleteAllForUser($userId);
         }
     }

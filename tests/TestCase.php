@@ -10,6 +10,8 @@ use Slim\Factory\AppFactory;
 abstract class TestCase extends PHPUnitTestCase
 {
     protected Container $container;
+
+    /** @var App<Container> */
     protected App $app;
 
     protected function setUp(): void

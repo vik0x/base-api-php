@@ -39,11 +39,16 @@ class JwtService
         return JWT::encode($payload, $this->secretKey, 'HS256');
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function validateToken(string $token): ?array
     {
         try {
             $decoded = JWT::decode($token, new Key($this->secretKey, 'HS256'));
-            return (array) $decoded;
+            /** @var array<string, mixed> */
+            $result = (array) $decoded;
+            return $result;
         } catch (Exception $e) {
             return null;
         }
@@ -57,6 +62,6 @@ class JwtService
             return null;
         }
 
-        return $payload['sub'];
+        return (string) $payload['sub'];
     }
 }

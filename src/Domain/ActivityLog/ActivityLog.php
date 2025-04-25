@@ -8,6 +8,9 @@ use Src\Domain\User\ValueObjects\UserId;
 
 final class ActivityLog
 {
+    /**
+     * @param array<string, mixed> $data
+     */
     public function __construct(
         private string $action,
         private string $entity,
@@ -15,10 +18,13 @@ final class ActivityLog
         private array $data,
         private ?UserId $userId = null,
         private ?Id $id = null,
-        private ?DateTimeImmutable $createdAt = new DateTimeImmutable()
+        private DateTimeImmutable $createdAt = new DateTimeImmutable()
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public static function create(
         string $action,
         string $entity,
@@ -49,6 +55,9 @@ final class ActivityLog
         return $this->entityId;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function data(): array
     {
         return $this->data;

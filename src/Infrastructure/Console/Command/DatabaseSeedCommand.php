@@ -8,7 +8,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Src\Infrastructure\Persistence\Doctrine\DoctrineCommandsFactory;
-use Src\Infrastructure\Persistence\Seeders\UserSeeder;
+use Src\Infrastructure\Persistence\Seeders\DatabaseSeeder;
 
 final class DatabaseSeedCommand extends Command
 {
@@ -24,15 +24,20 @@ final class DatabaseSeedCommand extends Command
         OutputInterface $output
     ): int {
         try {
-            $seeder = new UserSeeder(
-                DoctrineCommandsFactory::createConnection()
+            $dbConfig = require __DIR__ . '/../../Config/database.php';
+
+            /** @var array<string, mixed> $connectionConfig */
+            $connectionConfig = $dbConfig['connections'][$dbConfig['default']];
+
+            $seeder = new DatabaseSeeder(
+                DoctrineCommandsFactory::createConnection($connectionConfig)
             );
             $seeder->run();
 
             $output->writeln('<info>Database seeded successfully!</info>');
             return self::SUCCESS;
         } catch (\Exception $e) {
-            $output->writeln('<error>' . $e->getMessage() . '</error>');
+            $output->writeln('<e>' . $e->getMessage() . '</e>');
             return self::FAILURE;
         }
     }

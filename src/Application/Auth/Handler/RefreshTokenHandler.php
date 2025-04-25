@@ -19,6 +19,9 @@ final class RefreshTokenHandler
     ) {
     }
 
+    /**
+     * @return array{access_token: string, refresh_token: string, token_type: string, expires_in: int}
+     */
     public function __invoke(RefreshTokenCommand $command): array
     {
         $tokenValue   = RefreshTokenValue::fromString($command->refreshToken());
@@ -46,7 +49,7 @@ final class RefreshTokenHandler
                 'access_token'  => $accessToken,
                 'refresh_token' => $newRefreshToken->token()->value(),
                 'token_type'    => 'Bearer',
-                'expires_in'    => $decodedToken['exp'] - time(),
+                'expires_in'    => (int) ($decodedToken['exp'] - time()),
                ];
     }
 }

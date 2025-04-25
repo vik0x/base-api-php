@@ -22,10 +22,11 @@ final class RefreshToken
         int $userId,
         int $expiresInSeconds = 604800 // 7 days by default
     ): self {
-        $userId    = new UserId($userId);
-        $token     = RefreshTokenValue::generate();
-        $now       = new DateTimeImmutable();
-        $expiresAt = (clone $now)->modify('+' . $expiresInSeconds . ' seconds');
+        $userId         = new UserId($userId);
+        $token          = RefreshTokenValue::generate();
+        $now            = new DateTimeImmutable();
+        $expiresSeconds = '+' . $expiresInSeconds . ' seconds';
+        $expiresAt      = new DateTimeImmutable($expiresSeconds);
 
         return new self(
             null,
@@ -82,10 +83,13 @@ final class RefreshToken
         return $this->expiresAt < new DateTimeImmutable();
     }
 
+    /**
+     * @return array{id: int|null, user_id: int, token: string, expires_at: string, created_at: string}
+     */
     public function toArray(): array
     {
         return [
-                'id'         => $this->id->value(),
+                'id'         => $this->id?->value(),
                 'user_id'    => $this->userId->value(),
                 'token'      => $this->token->value(),
                 'expires_at' => $this->expiresAt->format('Y-m-d H:i:s'),

@@ -8,6 +8,9 @@ final class UpdateUserCommand
     private string $name;
     private string $email;
 
+    /**
+     * @param array{id: int, name: string, email: string} $data
+     */
     public function __construct(array $data)
     {
         $this->id    = $data['id'];
