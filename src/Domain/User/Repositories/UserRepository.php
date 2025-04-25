@@ -3,8 +3,9 @@
 namespace Src\Domain\User\Repositories;
 
 use Src\Domain\User\User;
-use Src\Domain\Shared\ValueObjects\Email;
 use Src\Domain\User\ValueObjects\UserId;
+use Src\Domain\Shared\ValueObjects\Email;
+use Src\Domain\Shared\Pagination\PaginationInterface;
 
 interface UserRepository
 {
@@ -16,7 +17,6 @@ interface UserRepository
 
     /**
      * @param array<int, string> $criteria
-     * @return array<string, mixed>
      */
-    public function search(array $criteria, int $page = 1, int $perPage = 15): array;
+    public function search(array $criteria, int $page = 1, int $perPage = 15): PaginationInterface;
 }

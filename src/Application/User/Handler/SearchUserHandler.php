@@ -2,20 +2,34 @@
 
 namespace Src\Application\User\Handler;
 
-use Src\Domain\User\Repositories\UserRepository;
 use Src\Application\User\Query\SearchUserQuery;
+use Src\Domain\Shared\Pagination\PaginationInterface;
+use Src\Domain\User\Repositories\UserRepository;
 
-final class SearchUserHandler
+/**
+ * Handler to search users
+ */
+class SearchUserHandler
 {
-    public function __construct(private UserRepository $repository)
+    /**
+     * @param UserRepository $userRepository User repository
+     */
+    public function __construct(private UserRepository $userRepository)
     {
     }
 
     /**
-     * @return array<string, mixed>
+     * Execute the search query
+     *
+     * @param SearchUserQuery $query Search query
+     * @return PaginationInterface Paginated results
      */
-    public function __invoke(SearchUserQuery $query): array
+    public function __invoke(SearchUserQuery $query): PaginationInterface
     {
-        return $this->repository->search($query->criteria(), $query->page(), $query->perPage());
+        return $this->userRepository->search(
+            $query->criteria(),
+            $query->page(),
+            $query->perPage()
+        );
     }
 }

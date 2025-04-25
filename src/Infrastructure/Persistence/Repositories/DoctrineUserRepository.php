@@ -3,12 +3,18 @@
 namespace Src\Infrastructure\Persistence\Repositories;
 
 use Doctrine\DBAL\Connection;
+use Pagerfanta\Pagerfanta;
 use Src\Domain\User\User;
 use Src\Domain\User\ValueObjects\UserId;
 use Src\Domain\User\Repositories\UserRepository;
 use Src\Domain\Shared\ValueObjects\Email;
 use Src\Domain\User\ValueObjects\Password;
+use Src\Domain\Shared\Pagination\PaginationInterface;
+use Src\Infrastructure\Pagination\DoctrineDbalAdapter;
+use Src\Infrastructure\Pagination\PagerfantaPagination;
 use DateTimeImmutable;
+use ReflectionClass;
+use ReflectionProperty;
 
 class DoctrineUserRepository implements UserRepository
 {
@@ -82,60 +88,73 @@ class DoctrineUserRepository implements UserRepository
     }
 
     /**
-     * @param array<int, string> $criteria
-     * @return array<string, mixed>
+     * Search users with pagination and filters
+     *
+     * @param array<int, string> $criteria Search criteria
+     * @param int $page Current page number
+     * @param int $perPage Number of elements per page
+     * @return PaginationInterface Paginated results
      */
-    public function search(array $criteria, int $page = 1, int $perPage = 15): array
+    public function search(array $criteria, int $page = 1, int $perPage = 15): PaginationInterface
     {
-        $offset     = ($page - 1) * $perPage;
-        $query      = 'SELECT * FROM ' . $this->table . ' ';
-        $countQuery = 'SELECT COUNT(*) FROM ' . $this->table . ' ';
-        $params     = [];
+        $queryBuilder = $this->connection->createQueryBuilder()
+            ->select('*')
+            ->from($this->table)
+            ->orderBy('created_at', 'DESC');
 
-        $whereClauses = [];
+        $countQueryBuilder = $this->connection->createQueryBuilder()
+            ->from($this->table);
+
         if (! empty($criteria)) {
+            $whereClauses = [];
             foreach ($criteria as $index => $term) {
                 if (is_string($term) && $term !== '') {
-                    $whereClauses[]          = '(name LIKE :term' . $index . ' OR email LIKE :term' . $index . ')';
-                    $params['term' . $index] = '%' . $term . '%';
+                    $paramName      = 'term' . $index;
+                    $whereClauses[] = $queryBuilder->expr()->like('name', ':' . $paramName) . ' OR ' .
+                                     $queryBuilder->expr()->like('email', ':' . $paramName);
+
+                    $paramValue = '%' . $term . '%';
+                    $queryBuilder->setParameter($paramName, $paramValue);
+                    $countQueryBuilder->setParameter($paramName, $paramValue);
                 }
+            }
+
+            if (! empty($whereClauses)) {
+                $queryBuilder->where('(' . implode(') OR (', $whereClauses) . ')');
+                $countQueryBuilder->where('(' . implode(') OR (', $whereClauses) . ')');
             }
         }
 
-        if (! empty($whereClauses)) {
-            $whereClause = ' WHERE ' . implode(' OR ', $whereClauses);
-            $query      .= $whereClause;
-            $countQuery .= $whereClause;
-        }
+        $adapter = new DoctrineDbalAdapter(
+            $queryBuilder,
+            $countQueryBuilder,
+            'id'
+        );
 
-        $query .= ' ORDER BY created_at DESC LIMIT ' . $perPage . ' OFFSET ' . $offset;
+        $pagerfanta = new Pagerfanta($adapter);
+        $pagerfanta->setMaxPerPage($perPage);
+        $pagerfanta->setCurrentPage($page);
 
-        $stmt      = $this->connection->prepare($query);
-        $countStmt = $this->connection->prepare($countQuery);
-
-        foreach ($params as $key => $value) {
-            $stmt->bindValue(':' . $key, $value);
-            $countStmt->bindValue(':' . $key, $value);
-        }
-
-        $rows  = $stmt->executeQuery()->fetchAllAssociative();
-        $total = (int) $countStmt->executeQuery()->fetchOne();
-
-        $users = [];
-        foreach ($rows as $row) {
+        $results = $pagerfanta->getCurrentPageResults();
+        $users   = [];
+        foreach ($results as $row) {
             $users[] = $this->hydrateUser($row);
         }
 
-        return [
-                'data'     => $users,
-                'total'    => $total,
-                'page'     => $page,
-                'per_page' => $perPage,
-               ];
+        $pagerfantaReflection = new ReflectionClass($pagerfanta);
+        /** @var ReflectionProperty $currentPageResultsProperty */
+        $currentPageResultsProperty = $pagerfantaReflection->getProperty('currentPageResults');
+        $currentPageResultsProperty->setAccessible(true);
+        $currentPageResultsProperty->setValue($pagerfanta, $users);
+
+        return new PagerfantaPagination($pagerfanta);
     }
 
     /**
-     * @param array<string, mixed> $user
+     * Converts an associative array from the database to a User domain entity
+     *
+     * @param array<string, mixed> $user User data from the database
+     * @return User Domain entity User
      */
     private function hydrateUser(array $user): User
     {
