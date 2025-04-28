@@ -49,37 +49,12 @@ final class UserController extends Controller
 
     public function list(Request $request, Response $response): Response
     {
-        $queryParams = $request->getQueryParams();
-
-        /** @var array{page?: int, perPage?: int, search?: string} $params */
-        $params = [
-                   'page'    => isset($queryParams['page']) ? (int) $queryParams['page'] : 1,
-                   'perPage' => isset($queryParams['perPage']) ? (int) $queryParams['perPage'] : 15,
-                   'search'  => isset($queryParams['search']) ? (string) $queryParams['search'] : '',
-                  ];
-
-        $command = new SearchUserQuery($params);
-        $result  = $this->commandBus->dispatch($command);
-
-        $meta = [
-                 'pagination' => [
-                                  'total'       => $result['total'],
-                                  'page'        => $command->page(),
-                                  'per_page'    => $command->perPage(),
-                                  'total_pages' => ceil($result['total'] / $command->perPage()),
-                                  'links'       => [
-                                                    'self'  => $request->getUri()->getPath(),
-                                                    'first' => $request->getUri()->getPath() . '?page=1',
-                                                    'last'  => $request->getUri()->getPath() . '?page=' . ceil($result['total'] / $command->perPage()),
-                                                   ],
-                                 ],
-                ];
-
-        $data = $this->fractal->collection(
-            $result['data'],
+        $result = $this->commandBus->dispatch(new SearchUserQuery($request->getQueryParams()));
+        $data   = $this->fractal->collection(
+            $result->getResults(),
             new UserTransformer(),
             'users',
-            $meta
+            $result->getMetadata()
         );
 
         return $this->jsonResponse($response, $data);
