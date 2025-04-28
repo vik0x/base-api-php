@@ -14,7 +14,7 @@
     "firebase/php-jwt": "^6.11",
     "league/fractal": "^0.20.2",
     "pagerfanta/doctrine-dbal-adapter": "^4.7",
-    "pagerfanta/pagerfanta": "^2.0",
+    "pagerfanta/pagerfanta": "^4.0",
     "php-di/php-di": "^7.0",
     "ramsey/uuid": "^4.7",
     "slim/psr7": "^1.6",

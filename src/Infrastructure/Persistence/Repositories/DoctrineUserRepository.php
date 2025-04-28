@@ -13,6 +13,7 @@ use Src\Domain\Shared\Pagination\PaginationInterface;
 use Src\Infrastructure\Pagination\DoctrineDbalAdapter;
 use Src\Infrastructure\Pagination\PagerfantaPagination;
 use DateTimeImmutable;
+use Pagerfanta\Adapter\CallbackAdapter;
 use ReflectionClass;
 use ReflectionProperty;
 
@@ -141,11 +142,20 @@ class DoctrineUserRepository implements UserRepository
             $users[] = $this->hydrateUser($row);
         }
 
-        $pagerfantaReflection = new ReflectionClass($pagerfanta);
-        /** @var ReflectionProperty $currentPageResultsProperty */
-        $currentPageResultsProperty = $pagerfantaReflection->getProperty('currentPageResults');
-        $currentPageResultsProperty->setAccessible(true);
-        $currentPageResultsProperty->setValue($pagerfanta, $users);
+        $hydratingAdapter = new CallbackAdapter(
+            fn() => $adapter->getNbResults(),
+            fn (int $offset, int $length) => array_map(
+                [
+                 $this,
+                 'hydrateUser',
+                ],
+                $adapter->getSlice($offset, $length)
+            )
+        );
+
+        $pagerfanta = new Pagerfanta($hydratingAdapter);
+        $pagerfanta->setMaxPerPage($perPage);
+        $pagerfanta->setCurrentPage($page);
 
         return new PagerfantaPagination($pagerfanta);
     }
